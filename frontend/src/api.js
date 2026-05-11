@@ -1,11 +1,34 @@
 const API_BASE_URL = "http://127.0.0.1:8000/expenses";
+const AUTH_STORAGE_KEY = "expense_auth";
+
+function getAuthToken() {
+  const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed?.token || null;
+  } catch {
+    return null;
+  }
+}
+
+function getAuthHeaders() {
+  const token = getAuthToken();
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+}
 
 export async function getExpenses(category = "") {
   const url = category
     ? `${API_BASE_URL}?category=${encodeURIComponent(category)}`
     : API_BASE_URL;
 
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
 
   if (!response.ok) {
     throw new Error("Error fetching expenses");
@@ -20,6 +43,7 @@ export async function createExpense(expenseData) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(expenseData),
   });
@@ -37,6 +61,7 @@ export async function updateExpense(expenseId, expenseData) {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(expenseData),
   });
@@ -52,6 +77,9 @@ export async function updateExpense(expenseId, expenseData) {
 export async function deleteExpense(expenseId) {
   const response = await fetch(`${API_BASE_URL}/${expenseId}`, {
     method: "DELETE",
+    headers: {
+      ...getAuthHeaders(),
+    },
   });
 
   if (!response.ok) {

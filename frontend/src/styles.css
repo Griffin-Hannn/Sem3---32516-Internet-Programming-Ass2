@@ -16,6 +16,10 @@ textarea {
   font: inherit;
 }
 
+a {
+  color: #1d4ed8;
+}
+
 .page {
   min-height: 100vh;
   padding: 32px 16px;
@@ -24,6 +28,10 @@ textarea {
 .container {
   max-width: 960px;
   margin: 0 auto;
+}
+
+.narrow-container {
+  max-width: 560px;
 }
 
 .header {
@@ -58,6 +66,41 @@ textarea {
   margin-top: 0;
   margin-bottom: 12px;
   font-size: 1rem;
+}
+
+.app-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nav-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nav-link {
+  text-decoration: none;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 600;
+}
+
+.nav-link.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.nav-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .expense-form {
@@ -258,41 +301,30 @@ button[type="submit"]:hover:not(:disabled) {
 
 .expense-actions {
   display: grid;
-  gap: 10px;
-  width: 110px;
-  flex-shrink: 0;
-}
-
-.expense-actions button {
-  width: 100%;
-}
-
-.summary-total {
-  margin-top: 0;
-  margin-bottom: 20px;
-  font-size: 1.05rem;
+  gap: 8px;
 }
 
 .summary-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 28px;
-}
-
-.summary-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 10px;
-}
-
-.summary-list li {
-  display: flex;
-  justify-content: space-between;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid #e5e7eb;
+}
+
+.summary-item {
+  padding: 14px;
+  border-radius: 10px;
+  background-color: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+
+.summary-item p {
+  margin: 0;
+}
+
+.summary-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-top: 6px;
 }
 
 @media (max-width: 768px) {
@@ -304,20 +336,16 @@ button[type="submit"]:hover:not(:disabled) {
     padding: 16px;
   }
 
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
   .expense-item {
     flex-direction: column;
   }
 
-  .expense-top-line {
-    align-items: flex-start;
-  }
-
   .expense-actions {
-    grid-template-columns: 1fr 1fr;
     width: 100%;
-  }
-
-  .summary-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }
