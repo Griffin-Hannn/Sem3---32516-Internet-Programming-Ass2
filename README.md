@@ -47,8 +47,8 @@ The app helps users manage personal spending in one place with:
 ## How To Run
 ## 1. Clone repository
 ```bash
-git clone <your-public-assignment2-repo-url>
-cd "Ass2"
+git clone https://github.com/Griffin-Hannn/Sem3---32516-Internet-Programming-Ass2.git
+cd Sem3---32516-Internet-Programming-Ass2
 ```
 
 ## 2. Backend setup
@@ -102,14 +102,14 @@ Option A (recommended for current Assignment 2 schema):
 3. Start backend once (`uvicorn main:app --reload`).
 4. SQLModel creates required tables (`user`, `category`, `expense`) automatically.
 
-Option B (legacy export file):
-- `database/export.sql` is included as required repository artifact.
-- It reflects the earlier Assignment 1 export format and may need regeneration after final Assignment 2 data setup.
-
-## Suggested Database Export Command (before submission)
+Option B: Restore from included database export
+A PostgreSQL export is included at `database/export.sql`. It contains the Assignment 2 schema and sample demo data for users, categories, and expenses.
+To restore:
 ```bash
-pg_dump -U <db_user> -d <db_name> -f database/export.sql
+createdb uts_32516_ass2_demo
+psql -U postgres -d uts_32516_ass2_demo -f database/export.sql
 ```
+Then set `DATABASE_URL` in `backend/.env` to point to the restored database.
 
 ## Folder Structure
 ```text
@@ -138,14 +138,20 @@ Ass2/
 ```
 
 ## Test Accounts
-Create accounts via `/register` or Swagger `POST /auth/register`.
-For admin testing, set one account's role to `admin` through DB or existing admin endpoint flow.
+The included `database/export.sql` contains demo users:
+- `admin@example.com`
+- `alice@example.com`
+- `ben@example.com`
+
+Demo password for all sample accounts:
+- `TestPassword123`
+
+You can also register a new account from the frontend register page.
 
 ## Known Limitations
 - No password reset flow.
 - Profile update UI is read-only currently.
 - No pagination controls in frontend lists yet.
-- `database/export.sql` should be re-exported near final submission to match latest schema/data.
 
 ## Submission Notes
 - Public GitHub repository required.
