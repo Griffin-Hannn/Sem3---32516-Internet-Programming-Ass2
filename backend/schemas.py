@@ -29,6 +29,18 @@ class UserUpdate(SQLModel):
     is_active: Optional[bool] = None
 
 
+class UserRegister(SQLModel):
+    email: str
+    name: str
+    password: str
+
+
+class TokenResponse(SQLModel):
+    access_token: str
+    token_type: str
+    user: UserRead
+
+
 class CategoryCreate(SQLModel):
     id: str
     name: str
