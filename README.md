@@ -1,207 +1,153 @@
-# Expense Tracker
+# Expense Tracker (Assignment 2)
 
+## Project Title
+Expense Tracker - UTS 32516 Internet Programming (Assignment 2)
 
-## Overview
-Expense Tracker is a single-page web application designed to help users record and review their daily spending in a simple and structured way. The application allows users to create, update, delete, and browse expense items, all within a dynamic interface without reloading the page.
+## Project Description
+This project is a full-stack expense tracking web app built with a React frontend and FastAPI backend.
+It supports authentication, role-based access control, and per-user expense/category management.
 
-This project was developed as part of Assignment 1 for 32516 Internet Programming. The main objective was to build a database-driven web application that connects a React frontend with a FastAPI backend and a PostgreSQL database.
+## Problem Solved
+The app helps users manage personal spending in one place with:
+- secure login
+- category-based expense tracking
+- quick searching/filtering
+- simple summaries and dashboard views
 
-
-## Problem It Solves
-Many people track their spending in an unstructured way, such as notes, screenshots, or memory. This makes it difficult to understand where money is being spent or to identify patterns over time.
-
-This application provides a simple and interactive way to manage expenses in one place. Users can easily record their spending, organise it by category, and review both category-based and monthly summaries. This helps make personal spending more transparent and easier to analyse.
-
-
-## Features
-- Single-page application with dynamic updates (no page reload)
-- Create, read, update, and delete expense items
-- Category-based filtering
-- Latest expenses displayed first
-- Total spending summary
-- Spending breakdown by category
-- Simple monthly spending trends
-- Inline editing workflow
-- Delete confirmation for safer operations
-- Basic error feedback for failed requests
-- Responsive layout for smaller screens
-
+## Main Features
+- User registration and JWT login
+- Protected routes in frontend and backend
+- Role-aware navigation (admin link only for admins)
+- Expense CRUD (create/read/update/delete)
+- Live expense search (title/description/category)
+- Category CRUD
+- Category rename consistency with existing expenses
+- Category deletion blocked when expenses still reference it
+- Dashboard summary (total spending, category totals, recent expenses)
+- Profile page
+- Admin user management (list users, update role/status, deactivate)
 
 ## Tech Stack
 ### Frontend
 - React
-- JavaScript
+- React Router DOM
+- Fetch API
 - CSS
 
 ### Backend
 - FastAPI
 - SQLModel
 - SQLAlchemy
+- Passlib (bcrypt)
+- PyJWT
 
 ### Database
-- PostgreSQL (local)
+- PostgreSQL
 
-### Development Tools
-- pgAdmin
-- Uvicorn
-- Git / GitHub
+## How To Run
+## 1. Clone repository
+```bash
+git clone <your-public-assignment2-repo-url>
+cd "Ass2"
+```
 
+## 2. Backend setup
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
 
-## Project Structure
+Update `backend/.env` values.
+
+Run backend:
+```bash
+uvicorn main:app --reload
+```
+
+Backend URL:
+- `http://127.0.0.1:8000`
+- Swagger docs: `http://127.0.0.1:8000/docs`
+
+## 3. Frontend setup
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Frontend URL:
+- `http://127.0.0.1:5173`
+
+Build check:
+```bash
+npm run build
+```
+
+## Environment Variables
+## Backend (`backend/.env`)
+- `DATABASE_URL=postgresql+psycopg2://<db_user>:<db_password>@localhost:5432/<db_name>`
+- `SECRET_KEY=<long_random_secret_key>`
+
+## Frontend (`frontend/.env`)
+- `VITE_API_URL=http://127.0.0.1:8000`
+
+## Database Setup
+Option A (recommended for current Assignment 2 schema):
+1. Create an empty PostgreSQL database.
+2. Set `DATABASE_URL` in backend `.env`.
+3. Start backend once (`uvicorn main:app --reload`).
+4. SQLModel creates required tables (`user`, `category`, `expense`) automatically.
+
+Option B (legacy export file):
+- `database/export.sql` is included as required repository artifact.
+- It reflects the earlier Assignment 1 export format and may need regeneration after final Assignment 2 data setup.
+
+## Suggested Database Export Command (before submission)
+```bash
+pg_dump -U <db_user> -d <db_name> -f database/export.sql
+```
+
+## Folder Structure
 ```text
-assignment1/
-│
+Ass2/
 ├── backend/
-│   ├── .env.example
-│   ├── crud.py
+│   ├── auth.py
 │   ├── database.py
 │   ├── main.py
 │   ├── models.py
-│   └── requirements.txt
-│
+│   ├── schemas.py
+│   ├── crud/
+│   └── routes/
+├── frontend/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── pages/
+│   │   └── routes/
+│   └── package.json
 ├── database/
 │   └── export.sql
-│
-├── frontend/
-│   ├── index.html
-│   ├── package.json
-│   └── src/
-│       ├── App.jsx
-│       ├── api.js
-│       ├── main.jsx
-│       └── styles.css
-│
-├── README.md
-└── .gitignore
+├── WORKLOAD.md
+└── docs/
+    └── demo_script.md
 ```
 
-### Structure Notes
-- `backend/main.py` defines the FastAPI routes and API endpoints.  
-- `backend/crud.py` contains database operations for creating, reading, updating, and deleting expense records.  
-- `backend/models.py` defines the Expense model using SQLModel.  
-- `backend/database.py` handles the database connection and session management.  
-- `frontend/src/App.jsx` contains the main user interface and application logic.  
-- `frontend/src/api.js` handles API requests between the frontend and backend.  
-- `frontend/src/styles.css` contains the main styling for the interface.  
-- `database/export.sql` stores the database schema and sample data for submission.  
+## Test Accounts
+Create accounts via `/register` or Swagger `POST /auth/register`.
+For admin testing, set one account's role to `admin` through DB or existing admin endpoint flow.
 
+## Known Limitations
+- No password reset flow.
+- Profile update UI is read-only currently.
+- No pagination controls in frontend lists yet.
+- `database/export.sql` should be re-exported near final submission to match latest schema/data.
 
-## How to Run the Project
-### 1. Clone the repository
-```bash
-    git clone https://github.com/Griffin-Hannn/Sem3---32516-Internet-Programming-Ass1.git
-    cd Sem3---32516-Internet-Programming-Ass1
-```
-### 2. Set up the backend
-Make sure PostgreSQL is running before starting the backend.
-
-```bash
-    cd backend
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
-```
-
-Create a `.env` file based on `.env.example`.
-
-Example:
-
-```txt
-    DATABASE_URL=postgresql+psycopg2://postgres:your_password@localhost:5432/uts_32516_ass1_griffin
-```
-
-Start the backend server:
-
-```bash
-    uvicorn main:app --reload
-```
-
-The backend should run on:
-
-    http://127.0.0.1:8000
-
-### 3. Set up the frontend
-
-```bash
-    cd frontend
-    npm install
-    npm run dev
-```
-
-The frontend should run on:
-
-    http://127.0.0.1:5173
-
-
-## Database Setup
-
-This project uses a local PostgreSQL database.
-
-Database name:
-
-```txt
-    uts_32516_ass1_griffin
-```
-
-Option 1: Use the exported SQL file
-
-After creating the database, import:
-
-```txt
-    database/export.sql
-```
-
-This file contains the database structure and sample data used for the project.
-
-Option 2: Let the app create the table
-
-If the database already exists and the backend is connected correctly, the application will create the required table automatically on startup.
-
-
-## API and Data Flow
-
-The application follows a simple client-server architecture.
-
-1. The frontend sends HTTP requests to the FastAPI backend.
-2. The backend receives the request and uses SQLModel to interact with the PostgreSQL database.
-3. Database operations (create, read, update, delete) are handled in the `crud.py` file.
-4. The backend returns JSON responses to the frontend.
-5. The frontend updates the interface dynamically without reloading the page.
-
-This design ensures a smooth user experience and keeps the frontend and backend responsibilities clearly separated.
-
-
-## Challenges
-
-One challenge was deciding how much functionality to include without overcomplicating the project. The goal was to build something more meaningful than a simple to-do list, while still keeping the implementation manageable.
-
-Another challenge was understanding how database sessions work in SQLModel. During development, it was important to correctly use session.add(), commit(), and refresh() to ensure data consistency.
-
-There were also some issues related to frontend state updates and API timing. In earlier versions, some updates did not immediately reflect in the UI, so the data fetching logic was simplified to make the behaviour more predictable.
-
-Finally, maintaining a clean project structure without unnecessary complexity required careful planning, especially when separating backend logic into different files.
-
-
-## Future Improvements
-
-If this project were to be extended further, the following improvements could be considered:
-
-- adding a search feature for expense titles
-- allowing sorting by amount as well as date
-- adding simple visual charts for spending trends
-- supporting custom categories
-- improving form validation and user feedback
-
-
-## Conclusion
-
-This project demonstrates a complete single-page application that performs all CRUD operations on a database. It integrates a React frontend with a FastAPI backend and a PostgreSQL database, providing a smooth and interactive user experience.
-
-The application meets the assignment requirements by implementing dynamic page updates, structured data handling, and a realistic use case for managing personal expenses.
-
-
-## Author
-
-Griffin Han  
-32516 Internet Programming  
-Autumn 2026
+## Submission Notes
+- Public GitHub repository required.
+- Include source code, README, workload file, and database export.
+- Include a video demonstration of up to 3 minutes.

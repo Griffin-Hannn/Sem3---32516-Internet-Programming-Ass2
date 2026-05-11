@@ -12,7 +12,6 @@ export default function Profile() {
         <p><strong>Role:</strong> {user?.role || "-"}</p>
         <p><strong>Status:</strong> {user?.is_active ? "Active" : "Inactive"}</p>
       </div>
-      <p className="subtle-text">Profile update features can be added when backend user-self update endpoints are introduced.</p>
     </section>
   );
 }

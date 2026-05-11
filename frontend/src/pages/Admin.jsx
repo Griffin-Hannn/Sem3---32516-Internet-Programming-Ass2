@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { deactivateUser, getUsers, updateUser } from "../api/users";
+import { getUsers, updateUser } from "../api/users";
 import { useAuth } from "../context/AuthContext";
 
 export default function Admin() {
@@ -41,7 +41,7 @@ export default function Admin() {
     }
   };
 
-  const handleActiveToggle = async (targetUser, isActive) => {
+  const handleSetActive = async (targetUser, isActive) => {
     setErrorMessage("");
     setLoading(true);
 
@@ -57,18 +57,7 @@ export default function Admin() {
 
   const handleDeactivate = async (targetUser) => {
     if (!window.confirm(`Deactivate ${targetUser.email}?`)) return;
-
-    setErrorMessage("");
-    setLoading(true);
-
-    try {
-      await deactivateUser(targetUser.id);
-      await fetchAllUsers();
-    } catch (error) {
-      setErrorMessage(error.message || "Error deactivating user");
-    } finally {
-      setLoading(false);
-    }
+    await handleSetActive(targetUser, false);
   };
 
   return (
@@ -117,19 +106,15 @@ export default function Admin() {
                       <div className="button-row">
                         <button
                           type="button"
-                          className="secondary-button"
-                          onClick={() => handleActiveToggle(user, !user.is_active)}
+                          className={user.is_active ? "danger-button" : "secondary-button"}
+                          onClick={() =>
+                            user.is_active
+                              ? handleDeactivate(user)
+                              : handleSetActive(user, true)
+                          }
                           disabled={loading || isSelf}
                         >
-                          {user.is_active ? "Set Inactive" : "Set Active"}
-                        </button>
-                        <button
-                          type="button"
-                          className="danger-button"
-                          onClick={() => handleDeactivate(user)}
-                          disabled={loading || isSelf || !user.is_active}
-                        >
-                          Deactivate
+                          {user.is_active ? "Deactivate" : "Reactivate"}
                         </button>
                       </div>
                     </td>
