@@ -6,8 +6,17 @@ from models import Category
 from schemas import CategoryCreate, CategoryUpdate
 
 
-async def create_category(session: Session, category_create: CategoryCreate) -> Category:
-    new_category = Category.model_validate(category_create)
+async def create_category(
+    session: Session,
+    category_create: CategoryCreate,
+    user_id: str,
+) -> Category:
+    new_category = Category.model_validate(
+        {
+            **category_create.model_dump(),
+            "user_id": user_id,
+        }
+    )
     session.add(new_category)
     return new_category
 

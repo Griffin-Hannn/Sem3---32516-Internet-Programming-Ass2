@@ -3,7 +3,7 @@ from typing import List, Optional
 from sqlmodel import Session, select
 
 from models import User
-from schemas import UserCreate, UserUpdate
+from schemas import UserAdminUpdate, UserCreate, UserUpdate
 
 
 async def create_user(session: Session, user_create: UserCreate) -> User:
@@ -26,7 +26,11 @@ async def get_users(session: Session, skip: int = 0, limit: int = 30) -> List[Us
     return session.exec(statement).all()
 
 
-async def update_user(session: Session, user_id: str, user_update: UserUpdate) -> Optional[User]:
+async def update_user(
+    session: Session,
+    user_id: str,
+    user_update: UserUpdate | UserAdminUpdate,
+) -> Optional[User]:
     user = await get_user(session, user_id)
 
     if not user:

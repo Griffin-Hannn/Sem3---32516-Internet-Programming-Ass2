@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 
 from database import engine
-from routes import auth_router, expenses_router
+from routes import auth_router, categories_router, expenses_router, users_router
 
 SQLModel.metadata.create_all(engine)
 
@@ -25,3 +25,5 @@ app.add_middleware(
 )
 app.include_router(expenses_router)
 app.include_router(auth_router)
+app.include_router(categories_router)
+app.include_router(users_router)

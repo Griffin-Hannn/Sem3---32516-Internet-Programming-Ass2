@@ -6,8 +6,17 @@ from models import Expense
 from schemas import ExpenseCreate, ExpenseUpdate
 
 
-async def create_expense(session: Session, expense_create: ExpenseCreate) -> Expense:
-    new_expense = Expense.model_validate(expense_create)
+async def create_expense(
+    session: Session,
+    expense_create: ExpenseCreate,
+    user_id: str,
+) -> Expense:
+    new_expense = Expense.model_validate(
+        {
+            **expense_create.model_dump(),
+            "user_id": user_id,
+        }
+    )
     session.add(new_expense)
     return new_expense
 
@@ -18,11 +27,15 @@ async def get_expense(session: Session, expense_id: str) -> Optional[Expense]:
 
 async def get_expenses(
     session: Session,
+    user_id: Optional[str] = None,
     category: Optional[str] = None,
     skip: int = 0,
     limit: int = 30,
 ) -> List[Expense]:
     statement = select(Expense)
+
+    if user_id:
+        statement = statement.where(Expense.user_id == user_id)
 
     if category:
         statement = statement.where(Expense.category == category)

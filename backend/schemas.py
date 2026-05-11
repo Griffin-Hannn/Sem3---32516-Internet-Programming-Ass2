@@ -29,6 +29,13 @@ class UserUpdate(SQLModel):
     is_active: Optional[bool] = None
 
 
+class UserAdminUpdate(SQLModel):
+    email: Optional[str] = None
+    name: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
 class UserRegister(SQLModel):
     email: str
     name: str
@@ -44,7 +51,6 @@ class TokenResponse(SQLModel):
 class CategoryCreate(SQLModel):
     id: str
     name: str
-    user_id: str
 
 
 class CategoryRead(SQLModel):
@@ -64,7 +70,6 @@ class ExpenseCreate(SQLModel):
     amount: float
     date: date
     description: Optional[str] = None
-    user_id: Optional[str] = None
     category_id: Optional[str] = None
 
 
@@ -85,5 +90,4 @@ class ExpenseUpdate(SQLModel):
     amount: Optional[float] = None
     date: Optional[date] = None
     description: Optional[str] = None
-    user_id: Optional[str] = None
     category_id: Optional[str] = None
