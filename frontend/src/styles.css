@@ -393,3 +393,38 @@ button[type="submit"]:hover:not(:disabled) {
     grid-template-columns: 1fr;
   }
 }
+
+.profile-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table th {
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.data-table select {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
