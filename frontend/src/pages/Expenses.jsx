@@ -1,418 +1,306 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer } from "react";
+
+import ExpenseForm from "../components/ExpenseForm";
+import ExpenseList from "../components/ExpenseList";
+import SearchBar from "../components/SearchBar";
+import SummaryPanel from "../components/SummaryPanel";
 import {
-  getExpenses,
   createExpense,
-  updateExpense,
   deleteExpense,
-} from "../api";
+  getExpenses,
+  updateExpense,
+} from "../api/expenses";
+import { getCategories } from "../api/categories";
 
 const initialFormData = {
   id: "",
   title: "",
-  category: "Food",
+  category: "",
+  category_id: "",
   amount: "",
   date: "",
   description: "",
 };
 
-function ExpensesPage() {
-  const [expenses, setExpenses] = useState([]);
-  const [filterCategory, setFilterCategory] = useState("");
-  const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState(initialFormData);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+const initialState = {
+  expenses: [],
+  categories: [],
+  filterCategoryId: "",
+  searchText: "",
+  editingId: null,
+  formData: initialFormData,
+  loading: false,
+  errorMessage: "",
+};
 
-  const titleInputRef = useRef(null);
+function reducer(state, action) {
+  switch (action.type) {
+    case "SET_LOADING":
+      return { ...state, loading: action.payload };
+    case "SET_ERROR":
+      return { ...state, errorMessage: action.payload };
+    case "SET_EXPENSES":
+      return { ...state, expenses: action.payload };
+    case "SET_CATEGORIES":
+      return { ...state, categories: action.payload };
+    case "SET_FILTER_CATEGORY_ID":
+      return { ...state, filterCategoryId: action.payload };
+    case "SET_SEARCH_TEXT":
+      return { ...state, searchText: action.payload };
+    case "SET_EDITING_ID":
+      return { ...state, editingId: action.payload };
+    case "SET_FORM_DATA":
+      return { ...state, formData: action.payload };
+    case "UPDATE_FORM_FIELD":
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          [action.payload.name]: action.payload.value,
+        },
+      };
+    case "RESET_FORM":
+      return {
+        ...state,
+        formData: initialFormData,
+        editingId: null,
+        errorMessage: "",
+      };
+    default:
+      return state;
+  }
+}
 
-  const categories = ["Food", "Transport", "Study", "Entertainment", "Other"];
+export default function ExpensesPage() {
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  const fetchAllExpenses = async (category = "") => {
-    setLoading(true);
-    setErrorMessage("");
+  const fetchCategories = async () => {
+    try {
+      const data = await getCategories();
+      dispatch({ type: "SET_CATEGORIES", payload: data });
+    } catch {
+      dispatch({ type: "SET_ERROR", payload: "Error loading categories" });
+    }
+  };
+
+  const fetchAllExpenses = async () => {
+    dispatch({ type: "SET_LOADING", payload: true });
+    dispatch({ type: "SET_ERROR", payload: "" });
 
     try {
-      const data = await getExpenses(category);
-      setExpenses(data);
-    } catch (error) {
-      setErrorMessage("Error loading expenses");
+      const data = await getExpenses();
+      dispatch({ type: "SET_EXPENSES", payload: data });
+    } catch {
+      dispatch({ type: "SET_ERROR", payload: "Error loading expenses" });
     } finally {
-      setLoading(false);
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
   useEffect(() => {
-    fetchAllExpenses(filterCategory);
-  }, [filterCategory]);
+    fetchCategories();
+    fetchAllExpenses();
 
-  useEffect(() => {
-    if (titleInputRef.current) {
-      titleInputRef.current.focus();
-    }
+    const handleCategoriesUpdated = () => {
+      fetchCategories();
+      fetchAllExpenses();
+    };
+
+    window.addEventListener("categories-updated", handleCategoriesUpdated);
+    return () => {
+      window.removeEventListener("categories-updated", handleCategoriesUpdated);
+    };
   }, []);
 
-  useEffect(() => {
-    if (editingId && titleInputRef.current) {
-      titleInputRef.current.focus();
-    }
-  }, [editingId]);
+  const categoryById = useMemo(() => {
+    const map = new Map();
+    state.categories.forEach((category) => map.set(category.id, category));
+    return map;
+  }, [state.categories]);
+
+  const filteredExpenses = useMemo(() => {
+    const search = state.searchText.trim().toLowerCase();
+
+    return state.expenses.filter((expense) => {
+      const matchesCategoryFilter =
+        !state.filterCategoryId || expense.category_id === state.filterCategoryId;
+
+      const haystack = [
+        expense.title,
+        expense.description || "",
+        expense.category || "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch = !search || haystack.includes(search);
+      return matchesCategoryFilter && matchesSearch;
+    });
+  }, [state.expenses, state.searchText, state.filterCategoryId]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
 
-    setFormData((prev) => {
-      return {
-        ...prev,
-        [name]: value,
-      };
-    });
-  };
-
-  const resetForm = () => {
-    setFormData(initialFormData);
-    setEditingId(null);
-    setErrorMessage("");
-
-    if (titleInputRef.current) {
-      titleInputRef.current.focus();
+    if (name === "category_id") {
+      const selectedCategory = categoryById.get(value);
+      dispatch({
+        type: "SET_FORM_DATA",
+        payload: {
+          ...state.formData,
+          category_id: value,
+          category: selectedCategory?.name || "",
+        },
+      });
+      return;
     }
+
+    dispatch({ type: "UPDATE_FORM_FIELD", payload: { name, value } });
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setErrorMessage("");
+    dispatch({ type: "SET_ERROR", payload: "" });
 
-    if (!formData.title.trim()) {
-      setErrorMessage("Title is required");
+    if (!state.formData.title.trim()) {
+      dispatch({ type: "SET_ERROR", payload: "Title is required" });
       return;
     }
 
-    if (!formData.amount || Number(formData.amount) <= 0) {
-      setErrorMessage("Amount must be greater than 0");
+    if (!state.formData.amount || Number(state.formData.amount) <= 0) {
+      dispatch({ type: "SET_ERROR", payload: "Amount must be greater than 0" });
       return;
     }
 
-    if (!formData.date) {
-      setErrorMessage("Date is required");
+    if (!state.formData.date) {
+      dispatch({ type: "SET_ERROR", payload: "Date is required" });
       return;
     }
 
-    const expensePayload = {
-      ...formData,
-      amount: Number(formData.amount),
+    if (!state.formData.category.trim()) {
+      dispatch({ type: "SET_ERROR", payload: "Category is required" });
+      return;
+    }
+
+    const payload = {
+      ...state.formData,
+      amount: Number(state.formData.amount),
     };
 
-    setLoading(true);
+    dispatch({ type: "SET_LOADING", payload: true });
 
     try {
-      if (editingId) {
-        await updateExpense(editingId, expensePayload);
+      if (state.editingId) {
+        await updateExpense(state.editingId, payload);
       } else {
-        const newId = new Date().toISOString();
-
-        await createExpense({
-          ...expensePayload,
-          id: newId,
-        });
+        await createExpense({ ...payload, id: new Date().toISOString() });
       }
 
-      await fetchAllExpenses(filterCategory);
-      resetForm();
+      await fetchAllExpenses();
+      dispatch({ type: "RESET_FORM" });
     } catch (error) {
-      setErrorMessage("Error saving expense");
+      dispatch({ type: "SET_ERROR", payload: error.message || "Error saving expense" });
     } finally {
-      setLoading(false);
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
   const handleEdit = (expense) => {
-    setEditingId(expense.id);
-    setFormData({
-      id: expense.id,
-      title: expense.title,
-      category: expense.category,
-      amount: expense.amount.toString(),
-      date: expense.date,
-      description: expense.description || "",
+    dispatch({ type: "SET_EDITING_ID", payload: expense.id });
+    dispatch({
+      type: "SET_FORM_DATA",
+      payload: {
+        id: expense.id,
+        title: expense.title,
+        category: expense.category,
+        category_id: expense.category_id || "",
+        amount: String(expense.amount),
+        date: expense.date,
+        description: expense.description || "",
+      },
     });
-    setErrorMessage("");
+    dispatch({ type: "SET_ERROR", payload: "" });
   };
 
   const handleDelete = async (expenseId, title) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${title}"?`
-    );
+    const confirmed = window.confirm(`Are you sure you want to delete "${title}"?`);
+    if (!confirmed) return;
 
-    if (!confirmed) {
-      return;
-    }
-
-    setLoading(true);
-    setErrorMessage("");
+    dispatch({ type: "SET_LOADING", payload: true });
+    dispatch({ type: "SET_ERROR", payload: "" });
 
     try {
       await deleteExpense(expenseId);
-      await fetchAllExpenses(filterCategory);
+      await fetchAllExpenses();
 
-      if (editingId === expenseId) {
-        resetForm();
+      if (state.editingId === expenseId) {
+        dispatch({ type: "RESET_FORM" });
       }
     } catch (error) {
-      setErrorMessage("Error deleting expense");
+      dispatch({ type: "SET_ERROR", payload: error.message || "Error deleting expense" });
     } finally {
-      setLoading(false);
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
-  const totalAmount = expenses.reduce((sum, expense) => {
-    return sum + Number(expense.amount);
-  }, 0);
-
-  const totalsByCategory = {};
-
-  expenses.forEach((expense) => {
-    const category = expense.category;
-    const amount = Number(expense.amount);
-
-    if (!totalsByCategory[category]) {
-      totalsByCategory[category] = 0;
-    }
-
-    totalsByCategory[category] += amount;
-  });
-
-  const monthlyTrend = {};
-
-  expenses.forEach((expense) => {
-    const monthKey = expense.date.slice(0, 7);
-    const amount = Number(expense.amount);
-
-    if (!monthlyTrend[monthKey]) {
-      monthlyTrend[monthKey] = 0;
-    }
-
-    monthlyTrend[monthKey] += amount;
-  });
+  const handleCancelEdit = () => {
+    dispatch({ type: "RESET_FORM" });
+  };
 
   return (
-    <div className="page">
-      <div className="container">
-        <header className="header">
-          <h1>Expense Tracker</h1>
-          <p>Track your spending with clear categories and simple insights.</p>
-        </header>
+    <>
+      <ExpenseForm
+        formData={state.formData}
+        editingId={state.editingId}
+        loading={state.loading}
+        errorMessage={state.errorMessage}
+        categories={state.categories}
+        onInputChange={handleInputChange}
+        onSubmit={handleSubmit}
+        onCancel={handleCancelEdit}
+      />
 
-        <section className="card">
-          <h2>{editingId ? "Edit Expense" : "Add Expense"}</h2>
+      <section className="card">
+        <div className="filter-row">
+          <div>
+            <h2>Expenses</h2>
+            <p className="subtle-text">Showing latest expenses first.</p>
+          </div>
 
-          <form className="expense-form" onSubmit={handleSubmit}>
-            <div className="form-row">
-              <label htmlFor="title">Title</label>
-              <input
-                ref={titleInputRef}
-                id="title"
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="e.g. Lunch, Train ticket"
-              />
-            </div>
-
-            <div className="form-row">
-              <label htmlFor="category">Category</label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-              >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-row">
-              <label htmlFor="amount">Amount</label>
-              <input
-                id="amount"
-                type="number"
-                name="amount"
-                value={formData.amount}
-                onChange={handleInputChange}
-                placeholder="e.g. 12.50"
-                step="0.01"
-                min="0"
-              />
-            </div>
-
-            <div className="form-row">
-              <label htmlFor="date">Date</label>
-              <input
-                id="date"
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="form-row">
-              <label htmlFor="description">Description</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Optional note"
-                rows="3"
-              />
-            </div>
-
-            <div className="button-row">
-              <button type="submit" disabled={loading}>
-                {editingId ? "Save Changes" : "Add Expense"}
-              </button>
-
-              {editingId && (
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={resetForm}
-                  disabled={loading}
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
-
-            {errorMessage && <p className="error-message">{errorMessage}</p>}
-          </form>
-        </section>
-
-        <section className="card">
-          <div className="filter-row">
-            <div>
-              <h2>Expenses</h2>
-              <p className="subtle-text">Showing latest expenses first.</p>
-            </div>
+          <div className="filters-inline">
+            <SearchBar
+              value={state.searchText}
+              onChange={(value) => dispatch({ type: "SET_SEARCH_TEXT", payload: value })}
+            />
 
             <div className="filter-control">
               <label htmlFor="category-filter">Filter by Category</label>
               <select
                 id="category-filter"
-                value={filterCategory}
-                onChange={(event) => setFilterCategory(event.target.value)}
+                value={state.filterCategoryId}
+                onChange={(event) =>
+                  dispatch({ type: "SET_FILTER_CATEGORY_ID", payload: event.target.value })
+                }
               >
                 <option value="">All</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+                {state.categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
                   </option>
                 ))}
               </select>
             </div>
           </div>
+        </div>
 
-          {loading && <p className="status-message">Loading...</p>}
+        <ExpenseList
+          expenses={filteredExpenses}
+          loading={state.loading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      </section>
 
-          {!loading && expenses.length === 0 && (
-            <p className="status-message">No expense items found.</p>
-          )}
-
-          {!loading && expenses.length > 0 && (
-            <div className="expense-list">
-              {expenses.map((expense) => (
-                <div key={expense.id} className="expense-item">
-                  <div className="expense-main">
-                    <div className="expense-top-line">
-                      <h3>{expense.title}</h3>
-                      <span className="amount">
-                        ${Number(expense.amount).toFixed(2)}
-                      </span>
-                    </div>
-
-                    <div className="expense-meta">
-                      <span className="badge">{expense.category}</span>
-                      <span>{expense.date}</span>
-                    </div>
-
-                    {expense.description && (
-                      <p className="description">{expense.description}</p>
-                    )}
-                  </div>
-
-                  <div className="expense-actions">
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => handleEdit(expense)}
-                      disabled={loading}
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      className="danger-button"
-                      onClick={() => handleDelete(expense.id, expense.title)}
-                      disabled={loading}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="card">
-          <h2>Summary</h2>
-          <p className="summary-total">
-            Total Spending: <strong>${totalAmount.toFixed(2)}</strong>
-          </p>
-
-          <div className="summary-grid">
-            <div>
-              <h3>By Category</h3>
-              {Object.keys(totalsByCategory).length === 0 ? (
-                <p className="subtle-text">No category data yet.</p>
-              ) : (
-                <ul className="summary-list">
-                  {Object.entries(totalsByCategory).map(([category, total]) => (
-                    <li key={category}>
-                      <span>{category}</span>
-                      <strong>${total.toFixed(2)}</strong>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <div>
-              <h3>Monthly Trend</h3>
-              {Object.keys(monthlyTrend).length === 0 ? (
-                <p className="subtle-text">No monthly data yet.</p>
-              ) : (
-                <ul className="summary-list">
-                  {Object.entries(monthlyTrend).map(([month, total]) => (
-                    <li key={month}>
-                      <span>{month}</span>
-                      <strong>${total.toFixed(2)}</strong>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </section>
-      </div>
-    </div>
+      <SummaryPanel expenses={filteredExpenses} />
+    </>
   );
 }
-
-export default ExpensesPage;

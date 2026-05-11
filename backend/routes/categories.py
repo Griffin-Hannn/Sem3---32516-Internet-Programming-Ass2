@@ -9,6 +9,8 @@ from crud import (
     delete_category,
     get_categories_by_user,
     get_category,
+    has_expenses_for_category,
+    sync_expense_category_name,
     update_category,
 )
 from database import get_session
@@ -54,7 +56,19 @@ async def edit_category(
     if existing_category.user_id != current_user.id and current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not allowed to modify this category")
 
+    old_name = existing_category.name
     db_category = await update_category(db, category_id, updated_category)
+    if not db_category:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    if updated_category.name and updated_category.name != old_name:
+        await sync_expense_category_name(
+            db,
+            category_id=category_id,
+            category_name=updated_category.name,
+            user_id=existing_category.user_id,
+        )
+
     db.commit()
     db.refresh(db_category)
     return db_category
@@ -72,6 +86,17 @@ async def remove_category(
 
     if existing_category.user_id != current_user.id and current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not allowed to delete this category")
+
+    used_by_expenses = await has_expenses_for_category(
+        db,
+        category_id=category_id,
+        user_id=existing_category.user_id,
+    )
+    if used_by_expenses:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete category because existing expenses still use it",
+        )
 
     deleted = await delete_category(db, category_id)
     if not deleted:

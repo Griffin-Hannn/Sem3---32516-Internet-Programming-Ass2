@@ -72,3 +72,35 @@ async def delete_expense(session: Session, expense_id: str) -> bool:
 
     session.delete(expense)
     return True
+
+
+async def has_expenses_for_category(
+    session: Session,
+    category_id: str,
+    user_id: Optional[str] = None,
+) -> bool:
+    statement = select(Expense).where(Expense.category_id == category_id)
+    if user_id:
+        statement = statement.where(Expense.user_id == user_id)
+
+    expense = session.exec(statement).first()
+    return expense is not None
+
+
+async def sync_expense_category_name(
+    session: Session,
+    category_id: str,
+    category_name: str,
+    user_id: Optional[str] = None,
+) -> int:
+    statement = select(Expense).where(Expense.category_id == category_id)
+    if user_id:
+        statement = statement.where(Expense.user_id == user_id)
+
+    expenses = session.exec(statement).all()
+
+    for expense in expenses:
+        expense.category = category_name
+        session.add(expense)
+
+    return len(expenses)

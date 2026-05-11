@@ -4,6 +4,8 @@ from .expenses import (
     get_expenses,
     update_expense,
     delete_expense,
+    has_expenses_for_category,
+    sync_expense_category_name,
 )
 from .users import (
     create_user,
@@ -27,6 +29,8 @@ __all__ = [
     "get_expenses",
     "update_expense",
     "delete_expense",
+    "has_expenses_for_category",
+    "sync_expense_category_name",
     "create_user",
     "get_user",
     "get_user_by_email",
