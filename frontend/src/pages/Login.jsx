@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { loginWithPassword } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
-
-const API_BASE = "http://127.0.0.1:8000";
 
 export default function Login() {
   const { isAuthenticated, login } = useAuth();
@@ -26,23 +25,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const body = new URLSearchParams();
-      body.append("username", email);
-      body.append("password", password);
-
-      const response = await fetch(`${API_BASE}/auth/token`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body,
-      });
-
-      if (!response.ok) {
-        throw new Error("Invalid email or password");
-      }
-
-      const data = await response.json();
+      const data = await loginWithPassword(email, password);
       login(data.access_token, data.user);
       navigate(from, { replace: true });
     } catch (error) {

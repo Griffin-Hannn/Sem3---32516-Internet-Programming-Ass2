@@ -1,7 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-
-const AUTH_STORAGE_KEY = "expense_auth";
-const AUTH_TTL_MS = 30 * 60 * 1000;
+import { AUTH_TTL_MS, clearAuthState, readAuthState, writeAuthState } from "../auth/storage";
 
 const AuthContext = createContext(null);
 
@@ -10,35 +8,20 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!raw) return;
-
-    try {
-      const parsed = JSON.parse(raw);
-      const { token: savedToken, user: savedUser, expiresAt } = parsed;
-      if (!savedToken || !savedUser || !expiresAt || Date.now() >= expiresAt) {
-        localStorage.removeItem(AUTH_STORAGE_KEY);
-        return;
-      }
-
-      setToken(savedToken);
-      setUser(savedUser);
-    } catch {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    }
+    const auth = readAuthState();
+    if (!auth) return;
+    setToken(auth.token);
+    setUser(auth.user);
   }, []);
 
   const login = (nextToken, nextUser, ttlMs = AUTH_TTL_MS) => {
-    const expiresAt = Date.now() + ttlMs;
-    const payload = { token: nextToken, user: nextUser, expiresAt };
-
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(payload));
+    writeAuthState(nextToken, nextUser, ttlMs);
     setToken(nextToken);
     setUser(nextUser);
   };
 
   const logout = () => {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
+    clearAuthState();
     setToken(null);
     setUser(null);
   };

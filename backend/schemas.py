@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date as DateValue
 from typing import Optional
 
 from sqlmodel import SQLModel
@@ -68,7 +68,7 @@ class ExpenseCreate(SQLModel):
     title: str
     category: str
     amount: float
-    date: date
+    date: DateValue
     description: Optional[str] = None
     category_id: Optional[str] = None
 
@@ -78,7 +78,7 @@ class ExpenseRead(SQLModel):
     title: str
     category: str
     amount: float
-    date: date
+    date: DateValue
     description: Optional[str] = None
     user_id: Optional[str] = None
     category_id: Optional[str] = None
@@ -88,6 +88,6 @@ class ExpenseUpdate(SQLModel):
     title: Optional[str] = None
     category: Optional[str] = None
     amount: Optional[float] = None
-    date: Optional[date] = None
+    date: Optional[DateValue] = None
     description: Optional[str] = None
     category_id: Optional[str] = None
