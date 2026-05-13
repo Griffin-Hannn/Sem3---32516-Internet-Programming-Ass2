@@ -52,7 +52,6 @@ All project work was completed by Griffin Han.
 - `frontend/src/api/expenses.js`
 - `frontend/src/api/categories.js`
 - `frontend/src/api/users.js`
-- `frontend/src/api.js`
 
 ## Documentation and submission preparation
 - `README.md`
