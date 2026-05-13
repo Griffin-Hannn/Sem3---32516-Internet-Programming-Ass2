@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { getUsers, updateUser } from "../api/users";
+import { deleteUser, getUsers, updateUser } from "../api/users";
 import { useAuth } from "../context/AuthContext";
 
 export default function Admin() {
@@ -56,8 +56,26 @@ export default function Admin() {
   };
 
   const handleDeactivate = async (targetUser) => {
-    if (!window.confirm(`Deactivate ${targetUser.email}?`)) return;
     await handleSetActive(targetUser, false);
+  };
+
+  const handleDelete = async (targetUser) => {
+    const confirmed = window.confirm(
+      `Delete user ${targetUser.email} permanently? This only succeeds if the user has no categories or expenses; otherwise deletion is blocked. This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setErrorMessage("");
+    setLoading(true);
+
+    try {
+      await deleteUser(targetUser.id);
+      await fetchAllUsers();
+    } catch (error) {
+      setErrorMessage(error.message || "Error deleting user");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -115,6 +133,14 @@ export default function Admin() {
                           disabled={loading || isSelf}
                         >
                           {user.is_active ? "Deactivate" : "Reactivate"}
+                        </button>
+                        <button
+                          type="button"
+                          className="danger-button"
+                          onClick={() => handleDelete(user)}
+                          disabled={loading || isSelf}
+                        >
+                          Delete
                         </button>
                       </div>
                     </td>

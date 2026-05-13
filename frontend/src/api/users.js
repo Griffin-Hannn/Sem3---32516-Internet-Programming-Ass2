@@ -13,7 +13,7 @@ export async function updateUser(userId, userData) {
   });
 }
 
-export async function deactivateUser(userId) {
+export async function deleteUser(userId) {
   return apiRequest(`/users/${userId}`, {
     method: "DELETE",
     withAuth: true,

@@ -12,6 +12,7 @@ from .users import (
     get_user,
     get_user_by_email,
     get_users,
+    get_user_related_data_counts,
     update_user,
     delete_user,
 )
@@ -35,6 +36,7 @@ __all__ = [
     "get_user",
     "get_user_by_email",
     "get_users",
+    "get_user_related_data_counts",
     "update_user",
     "delete_user",
     "create_category",

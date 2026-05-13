@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from sqlmodel import Session, select
 
-from models import User
+from models import Category, Expense, User
 from schemas import UserAdminUpdate, UserCreate, UserUpdate
 
 
@@ -53,3 +53,13 @@ async def delete_user(session: Session, user_id: str) -> bool:
 
     session.delete(user)
     return True
+
+
+async def get_user_related_data_counts(session: Session, user_id: str) -> dict[str, int]:
+    category_count = len(
+        session.exec(select(Category.id).where(Category.user_id == user_id)).all()
+    )
+    expense_count = len(
+        session.exec(select(Expense.id).where(Expense.user_id == user_id)).all()
+    )
+    return {"categories": category_count, "expenses": expense_count}
